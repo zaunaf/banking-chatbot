@@ -124,8 +124,8 @@ def execute_query(sql: str) -> list[dict]:
         rows = conn.execute(sql).fetchall()
         return [dict(row) for row in rows]
 
-@tool
 def extract_text_content(content) -> str:
+    """Extract visible text from model responses that may include content blocks."""
     if isinstance(content, str):
         return content
 
@@ -241,14 +241,28 @@ if "messages" not in st.session_state:
 
 
 with st.sidebar:
-    st.subheader("Sample User")
+    st.subheader("Sample Login")
+    st.caption("Semua PIN demo: 123456")
 
     try:
         users = get_sample_users()
         for user in users:
-            st.code(f'{user["name"]}\nCIF: {user["cif"]}\nHP: {user["phone"]}\nPIN: 123456')
+            st.code(user["phone"])
     except Exception as e:
         st.error(f"Gagal membaca sample user: {e}")
+
+    st.divider()
+    st.subheader("Contoh Prompt")
+    example_prompts = [
+        "Mohon tampilkan saldo semua simpanan dalam tabel.",
+        "Tampilkan 5 transaksi terakhir saya.",
+        "Jenis simpanan apa saja yang tersedia?",
+        "Jelaskan Simpanan Wadiah.",
+        "Jenis pembiayaan apa saja yang tersedia?",
+        "Simulasikan pembiayaan murabahah 12 juta tenor 24 bulan margin 12%.",
+    ]
+    for example_prompt in example_prompts:
+        st.markdown(f"- {example_prompt}")
 
     st.divider()
 
