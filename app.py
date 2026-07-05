@@ -154,7 +154,7 @@ Rules:
 """
 
     model = ChatGoogleGenerativeAI(
-        model="gemini-2.5-flash",
+        model="gemini-2.5-flash-lite",
         temperature=0,
     )
 
@@ -192,12 +192,12 @@ User question:
 # Streamlit UI
 # -----------------------------
 st.set_page_config(
-    page_title="ICBS Member Chatbot",
+    page_title="Banking Chatbot",
     page_icon="💬",
     layout="centered",
 )
 
-st.title("ICBS Member Chatbot")
+st.title("Banking Chatbot")
 st.caption("Chatbot simpanan dan pembiayaan berbasis SQLite + Gemini")
 
 if not os.getenv("GOOGLE_API_KEY"):
