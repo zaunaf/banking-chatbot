@@ -1,4 +1,4 @@
-# ICBS Member Chatbot
+# Banking Chatbot
 
 Chatbot demo untuk query database SQLite lokal menggunakan Gemini, LangChain, LangGraph, dan Streamlit.
 
