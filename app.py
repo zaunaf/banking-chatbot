@@ -124,6 +124,19 @@ def execute_query(sql: str) -> list[dict]:
         rows = conn.execute(sql).fetchall()
         return [dict(row) for row in rows]
 
+@tool
+def extract_text_content(content) -> str:
+    if isinstance(content, str):
+        return content
+
+    if isinstance(content, list):
+        texts = []
+        for block in content:
+            if isinstance(block, dict) and block.get("type") == "text":
+                texts.append(block.get("text", ""))
+        return "\n".join(texts).strip()
+
+    return str(content)
 
 @st.cache_resource
 def build_agent():
@@ -201,7 +214,7 @@ User question:
 
     agent = build_agent()
     response = agent.invoke({"messages": messages})
-    return response["messages"][-1].content
+    return extract_text_content(response["messages"][-1].content)
 
 
 # -----------------------------
