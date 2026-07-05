@@ -8,6 +8,8 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain.agents import create_agent
 
 DB_FILE = "sample.db"
+llm_model = "gemma-4-31b-it"
+#llm_model = "gemini-2.5-flash"
 
 if "GOOGLE_API_KEY" in st.secrets:
     os.environ["GOOGLE_API_KEY"] = st.secrets["GOOGLE_API_KEY"]
@@ -138,14 +140,18 @@ Database domain:
 - financing_product_types: available financing products
 - financing_accounts: member financing accounts
 
-Rules:
-- ALWAYS start by calling list_tables to discover available tables.
-- ALWAYS call describe_table on each relevant table before writing SQL.
-- Never assume table names or column names. Verify them first.
-- Only use execute_query for SELECT queries.
-- The current logged-in member will be provided in the user message context.
-- For account-specific questions, only query data for the logged-in CIF/person_id.
+Critical identity rule:
+- The user is already logged in.
+- For any account-specific question, ALWAYS filter by the exact logged-in person_id.
+- Do NOT search by partial name such as Ahmad.
+- Do NOT answer that data is missing before querying with person_id.
 - Never show or mention PIN values.
+
+SQL workflow rules:
+- ALWAYS start by calling list_tables.
+- ALWAYS call describe_table on each relevant table before writing SQL.
+- Never assume table names or column names.
+- Only use execute_query for SELECT queries.
 - When listing recent transactions, return maximum 5 transactions.
 - When explaining saving products, explain only one saving product at a time.
 - If the user asks broadly about saving products, list product names and ask which one they want explained.
@@ -154,7 +160,7 @@ Rules:
 """
 
     model = ChatGoogleGenerativeAI(
-        model="gemini-2.5-flash-lite",
+        model=llm_model,
         temperature=0,
     )
 
@@ -167,19 +173,29 @@ Rules:
 
 def ask_agent(prompt: str, user: dict, history: list[dict]) -> str:
     context_prompt = f"""
-Logged-in member context:
-- person_id: {user["person_id"]}
-- cif: {user["cif"]}
-- name: {user["name"]}
-- phone: {user["phone"]}
+Logged-in member:
+person_id = "{user["person_id"]}"
+cif = "{user["cif"]}"
+name = "{user["name"]}"
+phone = "{user["phone"]}"
+
+Important:
+For balance, saving accounts, financing accounts, and transactions,
+you MUST query using:
+WHERE person_id = "{user["person_id"]}"
 
 User question:
 {prompt}
 """
 
     messages = []
+
+    # Jangan masukkan pesan user terakhir dua kali.
     for msg in history[-10:]:
-        messages.append({"role": msg["role"], "content": msg["content"]})
+        if msg["role"] == "assistant":
+            messages.append({"role": "assistant", "content": msg["content"]})
+        elif msg["role"] == "user" and msg["content"] != prompt:
+            messages.append({"role": "user", "content": msg["content"]})
 
     messages.append({"role": "user", "content": context_prompt})
 
